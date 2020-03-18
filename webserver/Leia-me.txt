@@ -1,0 +1,9 @@
+-Na pasta:/home/"user"/Arduino/libraries/UIPEthernet-master/utility
+
+-Abrir o arquivo: Enc28J60Network.h
+
+-Mover a linha:
+
+  static uint8_t readByte(uint16_t addr);
+
+de private: para public
