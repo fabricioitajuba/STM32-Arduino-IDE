@@ -60,11 +60,6 @@ VCC  GND
 #include <SPI.h>
 #include <UIPEthernet.h>
  
-// ..utility\Enc28J60Network.h file - 
-//move readReg() subroutine def from private to public 
-
-//#define  DEBUG
- 
 #define NET_ENC28J60_EIR          0x1C
 #define NET_ENC28J60_ESTAT        0x1D
 #define NET_ENC28J60_ECON1        0x1F
@@ -94,9 +89,6 @@ unsigned long timer;
 void setup()
 {
   disableDebugPorts();
-#ifdef DEBUG
-  Serial.begin(115200);
-#endif  
 
   pinMode(pinLED, OUTPUT);
   pinMode(pinSwitch, OUTPUT);
@@ -117,14 +109,6 @@ void eth_reset()
   
   Ethernet.begin(mac, ip, ipdns, gateway, subnet);
   server.begin();
-
-#ifdef DEBUG
-  Serial.print(F("WEB server is at "));
-  Serial.println(Ethernet.localIP());
-  Serial.print(F("DNS server is at ")); 
-  Serial.println(Ethernet.dnsServerIP());
-#endif  
-
 }
  
 void loop()
@@ -134,27 +118,12 @@ void loop()
    
   if ((millis() - timer) > NET_ENC28J60_CHECK_PERIOD)
   {    
- 
-       // Enc28J60 is Enc28J60Network class that is defined in Enc28J60Network.h
-       // readReg() subroutine must be moved from private to public members area in \home\"user"\Arduino\libraries\UIPEthernet-master\utility\Enc28J60Network.h
-       // ENC28J60 ignore all incoming packets if ECON1.RXEN is not set
        uint8_t stateEconRxen = Enc28J60.readReg((uint8_t) NET_ENC28J60_ECON1) & NET_ENC28J60_ECON1_RXEN;
-       // ESTAT.BUFFER rised on TX or RX error
-       // I think the test of this register is not necessary - EIR.RXERIF state checking may be enough
        uint8_t stateEstatBuffer = Enc28J60.readReg((uint8_t) NET_ENC28J60_ESTAT) & NET_ENC28J60_ESTAT_BUFFER;
-       // EIR.RXERIF set on RX error
        uint8_t stateEirRxerif = Enc28J60.readReg((uint8_t) NET_ENC28J60_EIR) & NET_ENC28J60_EIR_RXERIF;
-#ifdef DEBUG
-       Serial.println("---REGS---");
-       Serial.println(stateEconRxen,HEX);
-       Serial.println(stateEstatBuffer,HEX);
-       Serial.println(stateEirRxerif,HEX);
-#endif
+
        if (!stateEconRxen || (stateEstatBuffer && stateEirRxerif))
-       {
-#ifdef DEBUG
-         Serial.println ("ENC28J60 reinit");
-#endif         
+       { 
           //Enc28J60.init(netConfig->macAddress);/////////////////////////////////////
          eth_reset();
        }
@@ -165,29 +134,17 @@ void loop()
   
   if(client)
   {    
-#ifdef DEBUG
-    Serial.println(F("\n--Client Connected--\n"));
-#endif  
     cdata = "";
-#ifdef DEBUG
-    Serial.println(cdata);
-#endif    
 
     while(client.connected())
     {
       if(client.available())
       {
         char c = client.read();
-#ifdef DEBUG
-        Serial.write(c);
-#endif        
+             
         cdata.concat(c);
         if(cdata.indexOf("\r\n\r\n") > 0)
         {
-#ifdef DEBUG
-          Serial.print(F("Buffer Length: "));
-          Serial.println(cdata.length());
-#endif
           client.println(F("HTTP/1.1 200 OK"));
           client.println(F("Content-Type: text/html"));
           client.println(F("Connection: close")); 
@@ -245,9 +202,6 @@ void loop()
       }
     }
     client.stop();
-#ifdef DEBUG
-    Serial.println(F("\n--Client Disconnected--"));
-#endif    
     timer = millis();
   }  
 }
