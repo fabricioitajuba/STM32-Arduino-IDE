@@ -1,6 +1,7 @@
 /*
 Webserver com o STM32 e ENC28J60
-Este exemplo liga e desliga o led da placa blue pill utilizando uma página http
+Este exemplo guarda o valor de duas variáveis na flash utilizando
+uma página http
 Autor: Eng. Fabrício de Lima Ribeiro
 Data: 19/03/2020
  
@@ -87,13 +88,13 @@ void loop()
   Ethernet.maintain();
    
   if ((millis() - timer) > NET_ENC28J60_CHECK_PERIOD)
-  {    
+  {
        uint8_t stateEconRxen = Enc28J60.readReg((uint8_t) NET_ENC28J60_ECON1) & NET_ENC28J60_ECON1_RXEN;
        uint8_t stateEstatBuffer = Enc28J60.readReg((uint8_t) NET_ENC28J60_ESTAT) & NET_ENC28J60_ESTAT_BUFFER;
        uint8_t stateEirRxerif = Enc28J60.readReg((uint8_t) NET_ENC28J60_EIR) & NET_ENC28J60_EIR_RXERIF;
 
        if (!stateEconRxen || (stateEstatBuffer && stateEirRxerif))
-       { 
+       {
           //Enc28J60.init(netConfig->macAddress);/////////////////////////////////////
          eth_reset();
        }
@@ -126,7 +127,40 @@ void loop()
           client.println(F("<body>"));
           client.println(F("<H2>STM32F103C8T6 WEB Server</H2>"));
 
-          client.println(F("<form method='GET' autocomplete='off' action='/ '>"));
+          if (cdata.indexOf("/?") > 0)
+          {
+            int n, n1, n2;
+            String dado = "";
+
+            cdata.c_str();
+
+            //var1
+            n1 = cdata.indexOf("var1=");                    
+            n2 = cdata.indexOf("var2=");
+
+            n1 = n1 + 5;
+            n2--;
+            n = n2 - n1;
+
+            dado = cdata.substring(n1, n2);
+            var1 = dado.toInt();
+
+            //var2
+            n1 = cdata.indexOf("var2=");                     
+            n2 = cdata.indexOf("end");
+            
+            n1 = n1 + 5;
+            n2--;
+            n = n2 - n1;
+
+            dado = cdata.substring(n1, n2);
+            var2 = dado.toInt();            
+            
+            EEPROM.write(addr_var1, var1);
+            EEPROM.write(addr_var2, var2);
+          }
+
+          client.println(F("<form method='GET' autocomplete='off' action='/'>"));
 
           var1 = EEPROM.read(addr_var1);
           var2 = EEPROM.read(addr_var2);
@@ -138,6 +172,8 @@ void loop()
             client.println(F("<br>Variavel 2: <input type='text' style='text-align:right' name='var2' size='3' value='"));
             client.print(var2);
             client.println(F("'><br/>"));
+
+            client.println(F("<input type='hidden' name='end' value='true'>"));
             
             client.println(F("<br><input type='submit' value='Altera dados'>"));
           client.println(F("</form>"));
