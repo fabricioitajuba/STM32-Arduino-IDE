@@ -129,7 +129,7 @@ void loop()
 
           if (cdata.indexOf("/?") > 0)
           {
-            int n, n1, n2;
+            int n1, n2;
             String dado = "";
 
             cdata.c_str();
@@ -140,7 +140,6 @@ void loop()
 
             n1 = n1 + 5;
             n2--;
-            n = n2 - n1;
 
             dado = cdata.substring(n1, n2);
             var1 = dado.toInt();
@@ -151,7 +150,6 @@ void loop()
             
             n1 = n1 + 5;
             n2--;
-            n = n2 - n1;
 
             dado = cdata.substring(n1, n2);
             var2 = dado.toInt();            
